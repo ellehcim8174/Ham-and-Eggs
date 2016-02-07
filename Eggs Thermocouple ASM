@@ -1,0 +1,272 @@
+$MODLP52
+org 0000H
+   ljmp MainProgram
+
+CLK  EQU 22118400
+BAUD equ 115200
+T2LOAD equ (0x10000-(CLK/(16*BAUD)))
+
+; These 'EQU' must match the wiring between the microcontroller and ADC
+CE_ADC		EQU		P2.0
+MY_MOSI		EQU		P2.1
+MY_MISO		EQU		P2.2
+MY_SCLK		EQU		P2.3
+
+; These 'equ' must match the wiring between the microcontroller and the LCD!
+LCD_RS equ P1.4
+LCD_RW equ P1.5
+LCD_E  equ P1.6
+LCD_D4 equ P3.2
+LCD_D5 equ P3.3
+LCD_D6 equ P3.4
+LCD_D7 equ P3.5
+$NOLIST
+$include(LCD_4bit.inc) ; A library of LCD related functions and utility macros
+$LIST
+
+DSEG at 30H
+Result:		ds 2
+x: ds 4
+y: ds 4
+bcd: ds 5
+coldj: ds 1 ;cold junction variable
+
+
+bseg
+mf: dbit 1
+
+;---------;
+;--SETUP--;
+;---------;
+
+$include(math32.inc)	 
+CSEG
+; Configure the serial port and baud rate using timer 2
+InitSerialPort:
+	clr TR2 ; Disable timer 2
+	mov T2CON, #30H ; RCLK=1, TCLK=1 
+	mov RCAP2H, #high(T2LOAD)  
+	mov RCAP2L, #low(T2LOAD)
+	setb TR2 ; Enable timer 2
+	mov SCON, #52H
+	ret
+
+; Send a character using the serial port
+putchar:
+    JNB TI, putchar
+    CLR TI
+    MOV SBUF, a
+    RET
+
+; Send a constant-zero-terminated string through the serial port
+SendString:
+    CLR A
+    MOVC A, @A+DPTR
+    JZ SendStringDone
+    LCALL putchar
+    INC DPTR
+    SJMP SendString
+SendStringDone:
+    ret
+    
+; for SPI communication
+INIT_SPI:
+	setb MY_MISO		; Make MISO an input pin
+	clr MY_SCLK			; For mode (0,0) SCLK is zero
+	ret
+
+DO_SPI_G:
+	push acc
+	mov R1, #0			; Reeived byte stored in R1
+	mov R2, #8			; Loop counter (8-bits)
+DO_SPI_G_LOOP:
+	mov a, R0			; Byte to write is in R0
+	rlc a				; Carry flag has bit to write
+	mov R0, a
+	mov MY_MOSI, c
+	setb MY_SCLK			; Transmit
+	mov c, MY_MISO		; Read received bit
+	mov a, R1			; Save received bit in R1
+	rlc a
+	mov R1, a
+	clr MY_SCLK
+	djnz R2, DO_SPI_G_LOOP
+	pop acc
+	ret
+
+Some_Macro mac
+	mov a, %0
+	swap a
+	anl a, #0x0f
+	orl a, #0x30
+	lcall putchar
+	mov a, %0
+	anl a, #0x0f
+	orl a, #0x30
+	lcall putchar
+endmac
+
+;--------------------;
+;START OF ACTUAL CODE;
+;--------------------;
+greater28a: ljmp greater28 ;because couldn't short jump
+SomeFunction:
+	mov	x+0, result+0
+	mov x+1, result+1
+	mov x+2, #0
+	mov x+3, #0
+	
+	Load_y(500000);next 3 lines are converting ADC to Vout *100 using that formula
+	lcall mul32 ;mul 500000
+	Load_y(1023)
+	lcall div32 ;div 1023
+	Load_y(41554)
+	
+	lcall x_gt_y
+	jb mf, greater28a ;checking mf bit that x_gt_y sets
+	Load_y(1462)
+	lcall div32 ;div 1023
+	Load_y(coldj)
+	lcall add32
+	
+display:
+	lcall hex2bcd
+	Some_Macro(bcd+4)
+	Some_Macro(bcd+3)
+	Some_Macro(bcd+2)
+	Some_Macro(bcd+1)
+	Some_Macro(bcd+0)
+	mov a,#'\n'
+	lcall putchar
+	mov a,#'\r'
+	lcall putchar
+	ret
+	
+;first estimation	
+greater28: 
+	Load_y(89714)
+	lcall x_gt_y
+	jb mf,  greater60
+	Load_y(41554)
+	lcall sub32
+	Load_y(1505)
+	lcall div32
+	Load_y(28)
+	lcall add32
+	Load_y(22)
+	lcall add32	
+	ljmp display
+	
+;second estimation
+greater60: 
+	Load_y(183734)
+	lcall x_gt_y
+	jb mf,  greater121
+	Load_y(89714)
+	lcall sub32
+	Load_y(1534)
+	lcall div32 
+	
+	Load_y(60)
+	lcall add32
+	Load_y(22)
+	lcall add32
+	ljmp display
+	
+;3rd est.
+greater121: 
+	Load_y(219877)
+	lcall x_gt_y
+jb mf, greater145
+	Load_y(183734)
+	lcall sub32
+	Load_y(1514)
+	lcall div32
+	
+	Load_y(121)
+	lcall add32 
+	Load_y(22)
+	lcall add32
+	ljmp display
+
+;4th est
+greater145: 
+	Load_y(260019)
+	lcall x_gt_y
+jb mf,  greater172
+	Load_y(219877)
+	lcall sub32
+	Load_y(1495)
+	lcall div32
+	
+	Load_y(145)
+	lcall add32 
+		Load_y(22)
+	lcall add32
+	ljmp display
+
+;5th est.
+greater172: 
+	Load_y(343036)
+	lcall x_gt_y
+	jb mf,  greater228
+	Load_y(260019)
+	lcall sub32
+	Load_y(1479)
+	lcall div32
+	
+	Load_y(172)
+	lcall add32 
+		Load_y(22)
+	lcall add32
+	ljmp display
+
+;6th est
+greater228: 
+	Load_y(343036)
+	Load_y(260019)
+	lcall sub32
+	Load_y(1493)
+	lcall div32 
+	
+	Load_y(228)
+	lcall add32
+	Load_y(22)
+	lcall add32
+	ljmp display
+	
+MainProgram:
+    MOV SP, #7FH ; Set the stack pointer to the begining of idata
+    mov PMOD, #0 ; Configure all ports in bidirectional mode
+    
+    LCALL InitSerialPort
+
+    
+    lcall INIT_SPI		; initialize SPI communication
+Forever:
+	clr CE_ADC
+	mov R0, #00000001B	; start bit:1
+	lcall DO_SPI_G
+	
+	mov R0, #10000000B	; single ended, read channel 0
+	lcall DO_SPI_G
+	mov a, R1			; R1 contains bits 8 and 9
+	anl a, #00000011B	; we need only the two LSB
+	mov Result+1, a		; save result high
+	
+	mov R0, #55H		; It doesn't matter what we transmit...
+	lcall DO_SPI_G
+	mov Result, R1		; R1 contains bits 0 to 7. Save result low.
+	setb CE_ADC
+	lcall waitsecond
+
+	lcall SomeFunction
+	
+    SJMP Forever
+ 	waitsecond:
+ 	mov R1, #0x05
+ 	
+keepgoing:  	Wait_Milli_Seconds(#100)
+  	DJNZ R1, keepgoing
+  	ret
+END
