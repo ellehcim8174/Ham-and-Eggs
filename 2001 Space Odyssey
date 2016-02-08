@@ -1,0 +1,94 @@
+Notes mac
+mov R3, %2
+mov R4, %1
+mov R5, %0
+lcall ?Notes
+endmac	    
+?Notes:
+
+LC0: mov a, R5
+	mov R2, a
+LC1: mov a, R4
+	mov R1, a
+	cpl p2.6
+LC2: mov R0, #166
+LC3: djnz R0, LC3 ; 3 cycles->3*45.21123ns*166=22.51519us
+    djnz R1, LC2 ; 22.51519us*85=xms
+    djnz R2, LC1 ; (xms)*%0=0.5s (approximately)
+    djnz R3,LC0
+    ret
+
+C4: Notes(#130,#85,#6);C4
+Wait_Milli_Seconds(#100)
+G4:Notes(#194,#57,#6);G4
+Wait_Milli_Seconds(#100)
+C5:Notes(#131,#42,#6);C5
+Wait_Milli_Seconds(#50)
+E5:Notes(#100,#34,#2);E5
+Wait_Milli_Seconds(#50)
+E5b:Notes(#154,#36,#9);E5b
+Wait_Milli_Seconds(#100)
+Notes(#25,#226,#2);G2
+Wait_Milli_Seconds(#100)
+Notes(#32,#169,#2);C3
+Wait_Milli_Seconds(#100)
+Notes(#25,#226,#2);G2
+Wait_Milli_Seconds(#100)
+Notes(#32,#169,#2);C3
+Wait_Milli_Seconds(#100)
+Notes(#25,#226,#2);G2
+Wait_Milli_Seconds(#100)
+Notes(#32,#169,#2);C3
+Wait_Milli_Seconds(#100)
+Notes(#25,#226,#2);G2
+Wait_Milli_Seconds(#100)
+Notes(#32,#169,#2);C3
+Wait_Milli_Seconds(#100)
+Notes(#25,#226,#2);G2
+Wait_Milli_Seconds(#100)
+Notes(#32,#169,#2);C3
+Wait_Milli_Seconds(#100)
+Notes(#25,#226,#2);G2
+Wait_Milli_Seconds(#100)
+Notes(#32,#169,#8);C3
+Wait_Milli_Seconds(#100)
+
+Notes(#130,#85,#6);C4
+Wait_Milli_Seconds(#100)
+Notes(#194,#57,#6);G4
+Wait_Milli_Seconds(#100)
+Notes(#131,#42,#6);C5
+Wait_Milli_Seconds(#50)
+Notes(#154,#36,#2);E5b
+Wait_Milli_Seconds(#50)
+Notes(#100,#34,#9);E5
+Wait_Milli_Seconds(#100)
+Notes(#25,#226,#2);G2
+Wait_Milli_Seconds(#100)
+Notes(#32,#169,#2);C3
+Wait_Milli_Seconds(#100)
+Notes(#25,#226,#2);G2
+Wait_Milli_Seconds(#100)
+Notes(#32,#169,#2);C3
+Wait_Milli_Seconds(#100)
+Notes(#25,#226,#2);G2
+Wait_Milli_Seconds(#100)
+Notes(#32,#169,#2);C3
+Wait_Milli_Seconds(#100)
+Notes(#25,#226,#2);G2
+Wait_Milli_Seconds(#100)
+Notes(#32,#169,#2);C3
+Wait_Milli_Seconds(#100)
+Notes(#25,#226,#2);G2
+Wait_Milli_Seconds(#100)
+Notes(#32,#169,#2);C3
+Wait_Milli_Seconds(#100)
+Notes(#25,#226,#2);G2
+Wait_Milli_Seconds(#100)
+Notes(#32,#169,#8);C3
+Wait_Milli_Seconds(#100)
+
+
+
+END
+
