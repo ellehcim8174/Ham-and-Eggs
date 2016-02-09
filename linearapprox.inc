@@ -21,24 +21,6 @@ SomeFunction:
         Load_y(coldj)
         lcall add32
         
-display:
-        lcall hex2bcd
-        Some_Macro(bcd+4)
-        Some_Macro(bcd+3)
-        Some_Macro(bcd+2)
-        Some_Macro(bcd+1)
-        Some_Macro(bcd+0)
-        mov a,#'\n'
-        lcall putchar
-        mov a,#'\r'
-        lcall putchar
-        
-        Set_Cursor(1,13)
-        
-        
-        
-        ret
-        
 ;first estimation        
 greater28: 
         Load_y(89714)
