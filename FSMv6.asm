@@ -50,7 +50,7 @@ $NOLIST
 $include    (LCD_4bit.inc)            ; library of LCD functions
 $include    (FSMinclude.inc)        ; macros for the FSM
 $include    (math32.inc)
-$include     (UserInterface2.inc)    ; user interface things
+$include     (UserInterface.inc)    ; user interface things
 $include    (song.inc)
 $include    (linearapprox.inc)        ; linear approx for temps
 $LIST
