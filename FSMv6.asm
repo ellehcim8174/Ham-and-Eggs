@@ -509,7 +509,6 @@ ReflowTmpM:            db 'REFLOW TEMP',0
 SoakTmpM:            db 'SOAK TEMP ',0
 SoakTimeM:            db 'SOAK TIME  ',0
 ReflowTimeM:        db 'REFLOW TIME',0
-DONE:                db 'DONE SETTING?   ', 0
 Blank:                db '                ',0
 screenInit1:                db 'STAT   00   000C',0            ; count@8, temp@13
 screenInit2:                db 'RUNTIME:   00:00',0            ; min@12, sec@15
