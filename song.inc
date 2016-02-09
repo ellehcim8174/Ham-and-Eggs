@@ -1,3 +1,5 @@
+cseg
+
 Notes mac
 mov R3, %2
 mov R4, %1
@@ -89,3 +91,6 @@ Wait_Milli_Seconds(#100)
 Notes(#32,#169,#8);C3
 Wait_Milli_Seconds(#100)
 ret
+
+
+END
