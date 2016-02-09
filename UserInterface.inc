@@ -78,18 +78,22 @@ displayVal:
     ; check which variable we are incre/decre to determine where to display
     mov a, WhichVal
     cjne a, #0x01, checkOthers
+	setAst(1,6)
     Set_Cursor(1,7)
     ljmp checkOver
 checkOthers:
     cjne a, #0x02, checkOthers2
+	setAst(2,6)
     Set_Cursor(2,7)
     ljmp checkOver
 checkOthers2:
     cjne a, #0x03, checkOthers3
+	setAst(1,12)
     Set_Cursor(1,13)
     ljmp checkOver
 checkOthers3:
     cjne a, #0x04, checkOver
+	setAst(2,12)
     Set_Cursor(2,13)
 checkOver:
     lcall hex2bcd
