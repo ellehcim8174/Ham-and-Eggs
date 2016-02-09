@@ -1,3 +1,5 @@
+cseg
+
 ;--------------------;
 ;START OF ACTUAL CODE;
 ;--------------------;
@@ -114,3 +116,6 @@ greater228:
         Load_y(22)
         lcall add32
         ljmp display
+		
+		
+END
