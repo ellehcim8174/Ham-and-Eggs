@@ -4,22 +4,22 @@ $NOLIST
 CSEG
 
 setAst mac
-    push a
+    push acc
     push psw
     ; clears asterisks
-    Set_Cursor(1, 5)
+    Set_Cursor(1, 6)
     WriteData(#' ')
-    Set_Cursor(2, 5)
+    Set_Cursor(2, 6)
     WriteData(#' ')
-    Set_Cursor(1, 13)
+    Set_Cursor(1, 12)
     WriteData(#' ')
-    Set_Cursor(2, 13)
+    Set_Cursor(2, 12)
     WriteData(#' ')
     ; write asterisk
     Set_Cursor(%0, %1)
     WriteData(#'*')
-    pop a
     pop psw
+	pop acc
 endmac    
 
 ; display temp
@@ -32,10 +32,11 @@ displayTemp:
 ; displays the time
 displayTime:
     mov a, runTime_s                        ; check if 60 seconds
-    cjne a, #60, displayTime_cont
+    cjne a, #0x60, displayTime_cont
     mov runTime_s, #0x00                ; if so, reset seconds to zero and increment minutes
     mov a, runTime_m
     add a, #0x01
+	mov runTime_m, a
 displayTime_cont:
     Set_Cursor(2,12)
     Display_BCD(runTime_m)
