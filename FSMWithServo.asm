@@ -309,7 +309,8 @@ state0_start:
     setb start                                ; set the start bit if the start button was pressed
     ljmp state0
     
-starts1: ljmp starts
+starts1: 
+	ljmp starts
 
 ; ramp to soak stage
 ; 100% power; stays in state until current temperature reaches soak temperature 
@@ -339,6 +340,7 @@ s1cont:
 jumpstate0:
 	clr start
 	clr start_enable
+	clr SSR_Power
 	Set_Cursor(1,1)
 	Send_Constant_String(#Blank)
 	Set_Cursor(2,1)
