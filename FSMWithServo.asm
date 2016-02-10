@@ -1,4 +1,3 @@
-
 ; FSMv7.asm
 ; fsm with states, timer 1 interrupt added in, states moved to another file
 $MODLP52
@@ -312,13 +311,18 @@ state0_start:
 starts1: 
 	ljmp starts
 
+jump2state0:
+	clr start
+	clr start_enable
+	ljmp state0
+
 ; ramp to soak stage
 ; 100% power; stays in state until current temperature reaches soak temperature 
 state1:
 	lcall displayTime
     lcall displaytimer
     lcall WaitHalfSec
-    jnb start, jumpstate0                    ; if start = 0, reset to state 0
+    jnb start, jump2state0                    ; if start = 0, reset to state 0
     setb SSR_Power                            ; set power = 100%
     Set_Cursor(1,1)
     Send_Constant_String(#Ramp)
@@ -327,17 +331,20 @@ state1:
     BLE(timerCount, #60)
     jb chkbit, s1cont
     BLE(currTmp, #50)
-    jb chkbit, jumpstate0
-    jnb STOP, state0
+    jb chkbit, jump2state0
+    jnb STOP, jump2state0
     Wait_Milli_Seconds(#25)
-    jnb STOP, state0
+    jnb STOP, jump2state0
 s1cont:
     BLE(currTmp, soakTmp)                    ; check if currTmp <= soakTmp
-    jb chkbit, state1                        ; if true, loop
+    jb chkbit, jumpstate1                        ; if true, loop
     Notes(#130,#85,#6);C4
     mov timerCount, #0x00                    ; set timer to 0 right before going to next state
     clr SSR_Power
     ljmp state2                                ; else cont states
+
+jumpstate1:
+	ljmp state1
 
 ; jump label to go to state0    
 jumpstate0:
@@ -362,6 +369,11 @@ loop:
 	Send_Constant_String(#Blank)
     ljmp state0
     
+jump3state0:
+	clr start
+	clr start_enable
+	ljmp state0
+
 ; at preheat/soak state
 ; stays in this state until soak time has been reached (20% power)
 state2:
@@ -369,7 +381,7 @@ state2:
     lcall checktemp
     lcall displaytimer
     lcall WaitHalfSec
-    jnb start, jump2state0                    ; if start pressed, reset to state0
+    jnb start, jump3state0                    ; if start pressed, reset to state0
    ; cjne a, #2, state3                        ; check if state = 2
     Set_Cursor(1,1)
     Send_Constant_String(#Soak)
@@ -380,11 +392,13 @@ state2:
     Notes(#130,#85,#6);C4
     mov timerCount,#0x00
     sjmp state3                                ; else cont states
-    jnb STOP, state0
+    jnb STOP, jump3state0
     Wait_Milli_Seconds(#25)
-    jnb STOP, state0
+    jnb STOP, jump3state0
 
-jump2state0:
+jump4state0:
+	clr start
+	clr start_enable
 	ljmp state0
 
 ; ramp to peak state
@@ -395,7 +409,7 @@ state3:
     setb SSR_Power                            ; put 100% power
     Set_Cursor(1,1)
     Send_Constant_String(#Peak)
-    jnb start, jump2state0                    ; if start = 0, reset to state 0
+    jnb start, jump4state0                    ; if start = 0, reset to state 0
     lcall checktemp
     BLE(currTmp, reflowTmp)                    ; check if currTmp <= reflowTmp
     lcall WaitHalfSec
@@ -404,9 +418,9 @@ state3:
     Notes(#130,#85,#6);C4
    	mov timerCount, #0x00
     sjmp state4                                ; else cont states
-    jnb STOP, state0
+    jnb STOP, jump4state0
     Wait_Milli_Seconds(#25)
-    jnb STOP, state0
+    jnb STOP, jump4state0
 ; reflow stage
 ; 20% power, stays in stage until selected reflow time has been reached
 state4:
@@ -437,10 +451,15 @@ state4:
 	clr P0.0
 	wait_milli_seconds(#17)
 	mov timerCount, #0x00
-    jnb STOP, state0
+    jnb STOP, jump5state0
     Wait_Milli_Seconds(#25)
-    jnb STOP, state0
+    jnb STOP, jump5state0
     sjmp state5									; else cont states
+
+jump5state0:
+	clr start
+	clr start_enable
+	ljmp state0
 
 ; cooling stage
 ; 0% power, stays in stage until current temperature has dropped to 60
@@ -455,9 +474,9 @@ state5:
     jnb chkbit, state5                       ; if true, loop
 	Notes(#130,#85,#6);C4
     mov a, #0
-    jnb STOP, state0
+    jnb STOP, jump5state0
     Wait_Milli_Seconds(#25)
-    jnb STOP, state0
+    jnb STOP, jump5state0
 goOn:
 	; display done message
 	set_cursor(1,1)
