@@ -198,7 +198,29 @@ Y1: djnz R0, Y1 					; 3 cycles->3*45.21123ns*166=22.51519us
     djnz R1, Y2 					; 22.51519us*250=5.629ms
     djnz R2, Y3 					; 5.629ms*89=0.5s (approximately)
     ret
-    
+
+stopProcess:
+    	clr start
+	clr start_enable
+	clr SSR_Power
+	Set_Cursor(1,1)
+	Send_Constant_String(#Blank)
+	Set_Cursor(2,1)
+	Send_Constant_String(#Blank)
+	Set_Cursor(1,1)
+	Send_Constant_String(#StopM)
+loop:
+	Notes(#130,#85,#6);C4
+	jb STOP, loop
+	Wait_Milli_Seconds(#50)
+	jb STOP, loop
+	jnb STOP, $
+	Set_Cursor(1,1)
+	Send_Constant_String(#Blank)
+	Set_Cursor(2,1)
+	Send_Constant_String(#Blank)
+	ret
+	
 ; A little macro to increment BCD variables
 increment_BCD mac
     mov a, %0
@@ -332,9 +354,20 @@ state1:
     jb chkbit, s1cont
     BLE(currTmp, #50)
     jb chkbit, jump2state0
+    jb STOP, s1cont
+    Wait_Milli_Seconds(#50)
+    jb STOP, s1cont
+    jnb STOP, $
+    lcall stopProcess
 s1cont:
     BLE(currTmp, soakTmp)                    ; check if currTmp <= soakTmp
     jb chkbit, jumpstate1  			; if true, loop
+    jb STOP, s1cont1
+    Wait_Milli_Seconds(#50)
+    jb STOP, s1cont1
+    jnb STOP, $
+    lcall stopProcess
+s1cont1:    
     Notes(#130,#85,#6);C4
     mov timerCount, #0x00                    ; set timer to 0 right before going to next state
     clr SSR_Power
@@ -385,6 +418,12 @@ state2:
     setb power20
     BLE(timerCount, soakTime)                ; check if timerCount < = soakTime
     jb chkbit, state2                        ; if true, loop
+    jb STOP, s2cont
+    Wait_Milli_Seconds(#50)
+    jb STOP, s2cont
+    jnb STOP, $
+    lcall stopProcesss
+s2cont:
     clr power20
     Notes(#130,#85,#6);C4
     mov timerCount,#0x00
@@ -409,6 +448,12 @@ state3:
     BLE(currTmp, reflowTmp)                    ; check if currTmp <= reflowTmp
     lcall WaitHalfSec
     jb chkbit, state3                        ; if true, loop
+     jb STOP, s3cont
+    Wait_Milli_Seconds(#50)
+    jb STOP, s3cont
+    jnb STOP, $
+    lcall stopProcess
+s3cont:
     clr SSR_Power
     Notes(#130,#85,#6);C4
    	mov timerCount, #0x00
@@ -429,6 +474,12 @@ state4:
     BLE(timerCount, reflowTime)            		; check if timerCount <= reflowTime
     lcall WaitHalfSec
     jb chkbit, state4                        	; if true, loop
+     jb STOP, s4cont
+    Wait_Milli_Seconds(#50)
+    jb STOP, s4cont
+    jnb STOP, $
+    lcall stopProcess
+s4cont:
     clr power20
     clr SSR_Power							; set power to 0%
    	lcall song
@@ -462,6 +513,12 @@ state5:
     BLE(currTmp, coolTmp)                    	; check if currTmp >= coolTmp
     lcall WaitHalfSec
     jnb chkbit, state5                       ; if true, loop
+     jb STOP, s5cont
+    Wait_Milli_Seconds(#50)
+    jb STOP, s5cont
+    jnb STOP, $
+    lcall stopProcess
+s5cont:
 	Notes(#130,#85,#6);C4
     mov a, #0
     
