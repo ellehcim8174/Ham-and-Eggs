@@ -253,7 +253,6 @@ Inc_Done:
     ; increment timer
 	mov a, timercount
 	add a, #0x01
-	da a
 	mov timercount, a
     ; increment runTime_s
     mov a, runTime_s
