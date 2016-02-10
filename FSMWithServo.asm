@@ -328,6 +328,9 @@ state1:
     jb chkbit, s1cont
     BLE(currTmp, #50)
     jb chkbit, jumpstate0
+    jnb STOP, state0
+    Wait_Milli_Seconds(#25)
+    jnb STOP, state0
 s1cont:
     BLE(currTmp, soakTmp)                    ; check if currTmp <= soakTmp
     jb chkbit, state1                        ; if true, loop
@@ -377,6 +380,9 @@ state2:
     Notes(#130,#85,#6);C4
     mov timerCount,#0x00
     sjmp state3                                ; else cont states
+    jnb STOP, state0
+    Wait_Milli_Seconds(#25)
+    jnb STOP, state0
 
 jump2state0:
 	ljmp state0
@@ -398,7 +404,9 @@ state3:
     Notes(#130,#85,#6);C4
    	mov timerCount, #0x00
     sjmp state4                                ; else cont states
-
+    jnb STOP, state0
+    Wait_Milli_Seconds(#25)
+    jnb STOP, state0
 ; reflow stage
 ; 20% power, stays in stage until selected reflow time has been reached
 state4:
@@ -429,6 +437,9 @@ state4:
 	clr P0.0
 	wait_milli_seconds(#17)
 	mov timerCount, #0x00
+    jnb STOP, state0
+    Wait_Milli_Seconds(#25)
+    jnb STOP, state0
     sjmp state5									; else cont states
 
 ; cooling stage
@@ -444,6 +455,9 @@ state5:
     jnb chkbit, state5                       ; if true, loop
 	Notes(#130,#85,#6);C4
     mov a, #0
+    jnb STOP, state0
+    Wait_Milli_Seconds(#25)
+    jnb STOP, state0
 goOn:
 	; display done message
 	set_cursor(1,1)
