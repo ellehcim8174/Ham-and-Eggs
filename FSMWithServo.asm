@@ -319,7 +319,7 @@ jump2state0:
 ; ramp to soak stage
 ; 100% power; stays in state until current temperature reaches soak temperature 
 state1:
-	lcall displayTime
+    lcall displayTime
     lcall displaytimer
     lcall WaitHalfSec
     jnb start, jump2state0                    ; if start = 0, reset to state 0
@@ -332,12 +332,17 @@ state1:
     jb chkbit, s1cont
     BLE(currTmp, #50)
     jb chkbit, jump2state0
-    jnb STOP, jump2state0
-    Wait_Milli_Seconds(#25)
+    jb STOP, s1cont
+    Wait_Milli_Seconds(#50)
+    jb STOP, s1cont
     jnb STOP, jump2state0
 s1cont:
     BLE(currTmp, soakTmp)                    ; check if currTmp <= soakTmp
-    jb chkbit, jumpstate1                        ; if true, loop
+    jb chkbit, jumpstate1  			; if true, loop
+    jb STOP, s1cont
+    Wait_Milli_Seconds(#50)
+    jb STOP, s1cont
+    jnb STOP, jump2state0
     Notes(#130,#85,#6);C4
     mov timerCount, #0x00                    ; set timer to 0 right before going to next state
     clr SSR_Power
@@ -392,8 +397,9 @@ state2:
     Notes(#130,#85,#6);C4
     mov timerCount,#0x00
     sjmp state3                                ; else cont states
-    jnb STOP, jump3state0
-    Wait_Milli_Seconds(#25)
+     jb STOP, s1cont
+    Wait_Milli_Seconds(#50)
+    jb STOP, s1cont
     jnb STOP, jump3state0
 
 jump4state0:
@@ -418,8 +424,9 @@ state3:
     Notes(#130,#85,#6);C4
    	mov timerCount, #0x00
     sjmp state4                                ; else cont states
-    jnb STOP, jump4state0
-    Wait_Milli_Seconds(#25)
+    jb STOP, s1cont
+    Wait_Milli_Seconds(#50)
+    jb STOP, s1cont
     jnb STOP, jump4state0
 ; reflow stage
 ; 20% power, stays in stage until selected reflow time has been reached
@@ -451,8 +458,9 @@ state4:
 	clr P0.0
 	wait_milli_seconds(#17)
 	mov timerCount, #0x00
-    jnb STOP, jump5state0
-    Wait_Milli_Seconds(#25)
+    jb STOP, s1cont
+    Wait_Milli_Seconds(#50)
+    jb STOP, s1cont
     jnb STOP, jump5state0
     sjmp state5									; else cont states
 
@@ -474,8 +482,9 @@ state5:
     jnb chkbit, state5                       ; if true, loop
 	Notes(#130,#85,#6);C4
     mov a, #0
-    jnb STOP, jump5state0
-    Wait_Milli_Seconds(#25)
+     jb STOP, s1cont
+    Wait_Milli_Seconds(#50)
+    jb STOP, s1cont
     jnb STOP, jump5state0
 goOn:
 	; display done message
