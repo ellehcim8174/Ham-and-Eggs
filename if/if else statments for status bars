@@ -1,0 +1,737 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jan 26 17:41:14 2016
+
+@author: Fonda Chau
+"""
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import sys, time, math
+
+import serial
+
+xsize=100
+# configure the serial port
+ser = serial.Serial(
+     port='COM8',
+     baudrate=115200,
+     parity=serial.PARITY_NONE,
+     stopbits=serial.STOPBITS_TWO,
+     bytesize=serial.EIGHTBITS
+)
+ser.isOpen()
+   
+def data_gen():
+    t = data_gen.t
+    while True:
+       t+=1
+       strin = ser.readline()
+       #strin2=ser.readline()
+       
+       val=strin
+       #state=strin2
+       yield t,val
+
+def run(data):
+    # update the data
+    t,y = data
+    if t>-1:
+        
+        xdata.append(t)
+        ydata.append(y)
+        s=int(y)        
+        if t>xsize: # Scroll to the left.
+            ax.set_xlim(t-xsize, t)
+        if state!=stateprev:
+            statea=0
+            stateb=0
+        if state==0: # in idle state
+            #display image    
+        elif state==1: # in ramp to soak
+            if statea==0:
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea==1
+            elif statea==1:                
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=2               
+            elif statea==2:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0                    
+                    statea=3
+            elif statea==3:
+                
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0                
+                    statea=4
+            elif statea==4:
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=5
+            elif statea==5:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=6
+            elif statea==6:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0                    
+                    statea=7
+            elif statea==7:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=8
+            elif statea==8:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=9
+            elif statea==9:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=10
+            elif statea==10:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=11
+            elif statea==11:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=12                
+            elif statea==12:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=13
+            elif statea==13:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=14
+            elif statea==14:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=15
+            elif statea==15:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=16
+            elif statea==16:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=17
+            elif statea==17:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=18
+            elif statea==18:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=19
+            elif statea==19:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=20
+            elif statea==20:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=21 
+            elif statea==21:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=22                
+            elif statea==22:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=23
+            elif statea==23:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=24
+            elif statea==24:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=25
+            elif statea==25:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=26
+            elif statea==26:
+                
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=27
+            elif statea==27:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=28
+            elif statea==28:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=29
+            elif statea==29:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=30
+            elif statea==30:
+
+                if stateb==0:
+                    stateb=1
+                elif stateb==1:
+                    stateb=2                    
+                elif stateb==2:
+                    stateb=3
+                elif stateb==3:
+                    stateb=4                    
+                elif stateb==4:
+                    stateb=5
+                elif stateb==5:
+                    stateb=6                    
+                elif stateb==6:
+                    stateb=7
+                elif stateb==7:
+                    stateb=8                    
+                elif stateb==8:
+                    stateb=0
+                    statea=30                
+        elif state==2:#in soak
+            state=3
+        elif state==3:#in ramp to soak
+            state=4
+        elif state==4: #in reflow 
+            state=5
+        else:# in cooling state
+            state=0
+        if t>50: # Scroll to the left.
+            ax.set_xlim(t-50, t+50)
+        line.set_data(xdata, ydata)
+
+    return line,
+
+def on_close_figure(event):
+    sys.exit(0)
+
+data_gen.t = -1
+fig = plt.figure()
+fig.canvas.mpl_connect('close_event', on_close_figure)
+ax = fig.add_subplot(111)
+line, = ax.plot([], [], lw=2)
+ax.set_ylim(0, 50)
+ax.set_xlim(0, xsize)
+ax.set_xlabel('time(s)')
+ax.set_ylabel('temperature(oC')
+ax.set_title('temperature sensor')
+ax.grid()
+statea=0
+stateb=0
+stateprev=0
+state=1
+
+xdata, ydata = [], []
+# Important: Although blit=True makes graphing faster, we need blit=False to prevent
+# spurious lines to appear when resizing the stripchart.
+ani = animation.FuncAnimation(fig, run, data_gen, blit=False, interval=100, repeat=False)
+plt.show()
