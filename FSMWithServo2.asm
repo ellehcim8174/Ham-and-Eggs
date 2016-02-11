@@ -565,22 +565,20 @@ check5:
     BLE(currTmp, coolTmp)                    	; check if currTmp >= coolTmp
     lcall WaitHalfSec
     jnb chkbit, state5                       ; if true, loop
-    ; display done message
+    mov R7, #6
+s5cont:
+    lcall WaitHalfSec
+    Notes(#130,#85,#6)
+    djnz R7, s5cont
+goOn:
+	; display done message
 	set_cursor(1,1)
 	send_Constant_string(#blank)
 	set_cursor(2,1)
 	send_Constant_string(#blank)
 	Set_Cursor(1,1)
 	Send_Constant_String(#DoneMessage)
-	mov a, #0x00
-s5cont:
-	push acc
-    lcall WaitHalfSec
-    Notes(#130,#85,#6);C4
-    pop acc
-    add a, #0x01
-    cjne a, #0x06, s5cont
-goOn:
+
     clr start_enable
     clr start
 	; wait for done button to be pressed before returning to state 0
