@@ -358,7 +358,8 @@ state1:
     setb SSR_Power                            	; set power = 100%
     Set_Cursor(1,1)
     Send_Constant_String(#Ramp)
-    
+    clr ledflag1
+    setb ledflag2
     jb STOP, check1
     Wait_Milli_Seconds(#50)
     jb STOP, check1
@@ -419,6 +420,8 @@ state2:
     lcall WaitHalfSec
     Set_Cursor(1,1)
     Send_Constant_String(#Soak)
+    clr ledflag2
+    setb ledflag1
     setb power20
     jb STOP, check2
     Wait_Milli_Seconds(#50)
@@ -444,6 +447,8 @@ state3:
     setb SSR_Power                            ; put 100% power
     Set_Cursor(1,1)
     Send_Constant_String(#Peak)
+    clr ledflag1
+    setb ledflag2
     jb STOP, check3
     Wait_Milli_Seconds(#50)
     jb STOP, check3
@@ -476,6 +481,8 @@ state4:
     Send_Constant_String(#Reflow)
     setb power20
     
+    clr ledflag2
+    setb ledflag1
     jb STOP, check4
     Wait_Milli_Seconds(#50)
     jb STOP, check4
@@ -527,7 +534,8 @@ state5:
 	lcall displayTimer
 	lcall WaitHalfSec
     ; if temp >= 60C, loop (code is same as <= except for jump to state 0
-    
+    clr ledflag1
+    setb ledflag2
     jb STOP, check5
     Wait_Milli_Seconds(#50)
     jb STOP, check5
