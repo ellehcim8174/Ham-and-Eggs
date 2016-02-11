@@ -97,6 +97,10 @@ INC_B                	equ P0.7
 DEC_B                	equ P0.5
 SET_B                	equ P0.3
 STOP                	equ P0.1
+GREEN 			equ P0.0
+PURPLE			equ P0.2
+YELLOW			equ P0.4
+TRICOLOUR		equ P0.6
     
 bseg
 start:                	dbit 1		; start = 1
