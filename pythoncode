@@ -1,0 +1,806 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Feb 10 17:30:18 2016
+
+@author: Fonda Chau
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import sys, time, math, pygame, os
+ 
+import serial
+ # configure the serial port
+ser = serial.Serial(
+     port='COM9',
+     baudrate=115200,
+     parity=serial.PARITY_NONE,
+     stopbits=serial.STOPBITS_TWO,
+     bytesize=serial.EIGHTBITS
+)
+ser.isOpen()
+
+
+"""import pygame
+import os
+import time
+ 
+_image_library = {}
+def get_image(path):
+        global _image_library
+        image = _image_library.get(path)
+        if image == None:
+                canonicalized_path = path.replace('/', os.sep).replace('\\', os.sep)
+                image = pygame.image.load(canonicalized_path)
+                _image_library[path] = image
+        return image
+ 
+pygame.init()
+screen = pygame.display.set_mode((500, 500))"""
+ 
+xsize=1000
+ 
+statea=0
+stateb=0
+import smtplib
+
+#sendemail(temperature value, [recipient email], state number)
+def sendemail(temp, recip, state):
+    FRM = ['REFLOW OVEN CONTROLLER']
+    TO = recip
+    SBJ = 'Reflow Oven Message'
+    if state == 1:
+        statename = 'ramp'
+    elif state == 2:
+        statename = 'soak'
+    elif state == 3:
+        statename = 'peak'
+    elif state == 4:
+        statename = 'reflow'
+    elif state == 5:
+        statename = 'cooling'
+    CNT = ('Your oven has reached ' + str(temp) + 'C and is in state: ' + statename + '.\n\n\nsent using potato')
+    MSG = """\From: %s\nTo: %s\nSubject: %s\n\n%s""" % (FRM, ", ".join(TO), SBJ, CNT)
+    
+    USR = 'elec291project1python@gmail.com'
+    PWD = 'pythonemailing'
+    
+    try:
+        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+        server.ehlo()
+        server.login (USR, PWD)
+        
+        server.sendmail(FRM, TO, MSG)
+        server.close()
+        #print 'sent'
+        return True
+    except:
+        #print 'failed'
+        return False
+        
+_image_library = {}
+def get_image(path):
+        global _image_library
+        image = _image_library.get(path)
+        if image == None:
+                canonicalized_path = path.replace('/', os.sep).replace('\\', os.sep)
+                image = pygame.image.load(canonicalized_path)
+                _image_library[path] = image
+        return image
+ 
+pygame.init()
+screen = pygame.display.set_mode((500, 500))
+statusflag1 = 1 
+statusflag2 = 1 
+statusflag3 = 1 
+statusflag4 = 1 
+statusflag5 = 1 
+
+def data_gen():
+    global statusflag1
+    global statusflag2
+    global statusflag3
+    global statusflag4
+    global statusflag5
+        
+    t = data_gen.t
+    while True:
+       t+=1
+       
+       strin1= ser.readline()
+       strin2=ser.readline()
+       val=int(strin1)
+       state=int(strin2)
+
+       if state>10 and val<10:
+           temp=state
+           state=val
+           val=temp
+       print val
+       print state
+       yield t,val, state
+
+def run(data):
+    # update the data    
+    global statusflag5
+    global statusflag4
+    global statusflag3
+    global statusflag2
+    global statusflag1
+    
+    global statea
+    global stateb
+
+    t,y, state= data
+
+    if t>-1:
+        xdata.append(t)
+        temp=int(y)        
+        ydata.append(y)
+    line.set_data(xdata, ydata)
+    print 'printing data' 
+    if state==0: # in idle state
+    #insert idle frame
+        screen.blit(get_image('status.png'), (0, 0))
+        pygame.display.flip()
+
+    elif state==1: # in ramp to soak
+
+        if statusflag1==1:        
+           # sendemail(temp, ['lisali42@hotmail.ca'], state)
+            print "email"
+            statusflag1=0
+        if statea==0:
+            statea=1
+            screen.blit(get_image('status1.png'), (0, 0))
+            pygame.display.flip()
+            
+        elif statea==1:
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0                
+                statea=2
+                screen.blit(get_image('status1.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==2:
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=3            
+                screen.blit(get_image('status2.png'), (0, 0))
+                pygame.display.flip()
+
+        elif statea==3:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=4
+                screen.blit(get_image('status3.png'), (0, 0))
+                pygame.display.flip()
+
+        elif statea==4:
+            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=5
+                screen.blit(get_image('status4.png'), (0, 0))
+                pygame.display.flip()
+            
+        elif statea==5:
+            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=6            
+                screen.blit(get_image('status5.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==6:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=7
+                screen.blit(get_image('status6.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==7:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=8            
+                screen.blit(get_image('status7.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==8:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=9            
+                screen.blit(get_image('status8.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==9:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=10            
+                screen.blit(get_image('status9.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==10:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=11            
+                screen.blit(get_image('status10.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==11:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=12            
+                screen.blit(get_image('status11.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==12:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=13
+                screen.blit(get_image('status12.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==13:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=14            
+                screen.blit(get_image('status13.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==14:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=15
+                screen.blit(get_image('status14.png'), (0, 0))
+                pygame.display.flip()
+        elif statea>=15:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                screen.blit(get_image('status15.png'), (0, 0))
+                pygame.display.flip()
+    elif state==2: # in ramp to soak
+        if statusflag2==1:        
+            #sendemail(temp, ['lisali42@hotmail.ca'], state)
+            print "email"
+            statusflag2=0
+            statea=0
+        if statea==0:
+            statea=1
+            screen.blit(get_image('status16.png'), (0, 0))
+            pygame.display.flip()
+            
+        elif statea==1:
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0                
+                statea=2
+                screen.blit(get_image('status17.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==2:
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=3            
+                screen.blit(get_image('status18.png'), (0, 0))
+                pygame.display.flip()
+
+        elif statea==3:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=4
+                screen.blit(get_image('status19.png'), (0, 0))
+                pygame.display.flip()
+
+        elif statea==4:
+            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=5
+                screen.blit(get_image('status20.png'), (0, 0))
+                pygame.display.flip()
+            
+        elif statea==5:
+            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=6            
+                screen.blit(get_image('status21.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==6:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=7
+                screen.blit(get_image('status22.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==7:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=8            
+                screen.blit(get_image('status23.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==8:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=9            
+                screen.blit(get_image('status24.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==9:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=10            
+                screen.blit(get_image('status25.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==10:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=11            
+                screen.blit(get_image('status26.png'), (0, 0))
+                pygame.display.flip()
+        elif statea>=11:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+           
+                screen.blit(get_image('status27.png'), (0, 0))
+                pygame.display.flip()
+                stateb=0      
+    elif state==3: # in ramp to soak
+        if statusflag3==1:        
+            #sendemail(temp, ['lisali42@hotmail.ca'], state)
+            print "email"
+            statusflag3=0
+            statea=0
+        if statea==0:
+            statea=1
+            screen.blit(get_image('status28.png'), (0, 0))
+            pygame.display.flip()
+            
+        elif statea==1:
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0                
+                statea=2
+                screen.blit(get_image('status29.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==2:
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=3            
+                screen.blit(get_image('status30.png'), (0, 0))
+                pygame.display.flip()
+
+        elif statea>=3:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+
+                screen.blit(get_image('status31.png'), (0, 0))
+                pygame.display.flip()
+                stateb=0       
+    elif state==4: # in ramp to soak
+        if statusflag4==1:        
+            #sendemail(temp, ['lisali42@hotmail.ca'], state)
+            print "email"
+            statusflag4=0
+            statea=0       
+
+        if statea==0:
+            statea=1
+            screen.blit(get_image('status32.png'), (0, 0))
+            pygame.display.flip()
+            
+        elif statea==1:
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0                
+                statea=2
+                screen.blit(get_image('status33.png'), (0, 0))
+                pygame.display.flip()
+        elif statea>=2:
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                screen.blit(get_image('status34.png'), (0, 0))
+                pygame.display.flip()
+                stateb=0 
+    elif state==5: # in ramp to soak
+        if statusflag5==1:        
+            #sendemail(temp, ['lisali42@hotmail.ca'], state)
+            print "email"
+            statusflag5=0
+            statea=0
+        if statea==0:
+            statea=1
+            screen.blit(get_image('status35.png'), (0, 0))
+            pygame.display.flip()
+
+        elif statea==1:
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0                
+                statea=2
+                screen.blit(get_image('status36.png'), (0, 0))
+                pygame.display.flip()
+        elif statea==2:
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=3            
+                screen.blit(get_image('status37.png'), (0, 0))
+                pygame.display.flip()
+
+        elif statea==3:            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5                
+            elif stateb==5:
+                stateb=0
+                statea=4
+                screen.blit(get_image('status38.png'), (0, 0))
+                pygame.display.flip()
+
+        elif statea>=4:
+            
+            if stateb==0:
+                stateb=1
+            elif stateb==1:
+                stateb=2                
+            elif stateb==2:
+                stateb=3                
+            elif stateb==3:
+                stateb=4                
+            elif stateb==4:
+                stateb=5   
+            elif stateb==5:
+                stateb=6                
+            elif stateb==6:
+                stateb=7                
+            elif stateb==7:
+                stateb=8                
+            elif stateb==8:
+                stateb=9 
+            elif stateb==9:
+                stateb=0
+                screen.blit(get_image('status39.png'), (0, 0))
+                pygame.display.flip()
+
+    return line,
+ 
+def on_close_figure(event):
+    sys.exit(0)
+ 
+data_gen.t = -1
+fig = plt.figure()
+fig.canvas.mpl_connect('close_event', on_close_figure)
+ax = fig.add_subplot(111)
+line, = ax.plot([], [], lw=2)
+ax.set_ylim(0, 300)
+ax.set_xlim(0, xsize)
+ax.set_xlabel('time(s)')
+ax.set_ylabel('temperature(oC')
+ax.set_title('super oven vs time')
+ax.grid()
+ 
+xdata, ydata = [], []
+ 
+# Important: Although blit=True makes graphing faster, we need blit=False to prevent
+# spurious lines to appear when resizing the stripchart.
+ani = animation.FuncAnimation(fig, run, data_gen, blit=False, interval=100, repeat=False)
+plt.show()
