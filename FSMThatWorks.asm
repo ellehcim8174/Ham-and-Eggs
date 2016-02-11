@@ -582,6 +582,7 @@ check_done_button:
 	send_Constant_string(#blank)
 	set_cursor(2,1)
 	send_Constant_string(#blank)
+	    clr dispTemp
     ljmp state0                                ; else cont states
 
 ; status messages
