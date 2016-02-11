@@ -297,6 +297,26 @@ Inc_Done:
     setb SSR_Power                    ; turn on power for 1 second
     mov countPs, #5                    ; sets the count back at 5
     
+    jb ledflag1, combo1
+    jb ledflag2, combo2
+combo1:
+    cpl TRICOLOUR
+    Wait_Milli_Seconds(#80)
+    cpl TRICOLOUR
+    cpl PURPLE
+    Wait_Milli_Seconds(#80)
+    cpl PURPLE
+    sjmp combo1
+combo2:
+    cpl YELLOW
+    Wait_Milli_Seconds(#80)
+    cpl YELLOW
+    cpl GREEN
+    Wait_Milli_Seconds(#80)
+    cpl GREEN
+    sjmp combo2
+    
+    
 EXIT:
     pop cy        ; restore carry flag
     pop PSW     ; restore PSW register
