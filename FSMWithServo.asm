@@ -82,6 +82,7 @@ countPs:            	ds 1
 Result:                	ds 2
 coldj: 					ds 1 		;cold junction variable
 
+Test: db 'test', 0
 ; These 'equ' must match the wiring between the microcontroller and the LCD!
 LCD_RS					equ P1.4
 LCD_RW                	equ P1.5
@@ -200,6 +201,7 @@ Y1: djnz R0, Y1 					; 3 cycles->3*45.21123ns*166=22.51519us
     ret
 
 stopProcess:
+	SendString(Test)
     	clr start
 	clr start_enable
 	clr SSR_Power
