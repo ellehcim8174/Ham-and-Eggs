@@ -98,6 +98,10 @@ INC_B                	equ P0.7
 DEC_B                	equ P0.5
 SET_B                	equ P0.3
 STOP                	equ P0.1
+GREEN 			equ P0.2
+PURPLE			equ P0.4
+YELLOW			equ P0.6
+TRICOLOUR		equ P2.7
     
 bseg
 start:                	dbit 1		; start = 1
@@ -107,6 +111,8 @@ start_enable:        	dbit 1
 mf:                    	dbit 1
 hundred:                dbit 1
 hundred2:               dbit 1
+ledflag1:               dbit 1
+ledflag2:               dbit 1
 
 cseg
 
@@ -313,6 +319,8 @@ state0:
     clr SSR_Power
     mov runTime_s, #0x00                     ; sets seconds to zeo right before state 1
     mov runTime_m, #0x00                    ; sets minutes to zero right before state 1
+    clr ledflag2
+    setb ledflag1
     jb start, jmpstate1                        ; if start = 1, jump to state 1
     jb SET_B, state0_start                  ; if the 'set' button is not pressed skip to checking the start button
     Wait_Milli_Seconds(#50)
@@ -350,6 +358,7 @@ state1:
     setb SSR_Power                            	; set power = 100%
     Set_Cursor(1,1)
     Send_Constant_String(#Ramp)
+    
     jb STOP, check1
     Wait_Milli_Seconds(#50)
     jb STOP, check1
