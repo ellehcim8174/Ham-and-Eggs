@@ -51,6 +51,76 @@ display:
 	set_Cursor(1,12)
 	display_bcd(bcd+1)
 	display_bcd(bcd)
+	mov bcd,state
+	mov bcd+1,#0x00
+	mov bcd+2,#0x00
+	mov bcd+3,#0x00
+	mov bcd+4,#0x00
+	Some_Macro(bcd+4)
+	Some_Macro(bcd+3)
+	Some_Macro(bcd+2)
+	Some_Macro(bcd+1)
+	Some_Macro(bcd+0)
+	mov a,#'\n'
+	lcall putchar
+	mov a,#'\r'
+	lcall putchar
+
+	; send soakTmp
+	mov x+1, soakTmp+1
+	mov x+0, soakTmp+0
+	lcall hex2bcd
+	Some_Macro(bcd+4)
+	Some_Macro(bcd+3)
+	Some_Macro(bcd+2)
+	Some_Macro(bcd+1)
+	Some_Macro(bcd+0)
+	mov a,#'\n'
+	lcall putchar
+	mov a,#'\r'
+	lcall putchar
+	
+	; send soakTime
+	mov x+1, soakTime+1
+	mov x+0, soakTime+0
+	lcall hex2bcd
+	Some_Macro(bcd+4)
+	Some_Macro(bcd+3)
+	Some_Macro(bcd+2)
+	Some_Macro(bcd+1)
+	Some_Macro(bcd+0)
+	mov a,#'\n'
+	lcall putchar
+	mov a,#'\r'
+	lcall putchar
+	
+	; send reflowTmp
+	mov x+1, reflowTmp+1
+	mov x+0, reflowTmp+0
+	lcall hex2bcd
+	Some_Macro(bcd+4)
+	Some_Macro(bcd+3)
+	Some_Macro(bcd+2)
+	Some_Macro(bcd+1)
+	Some_Macro(bcd+0)
+	mov a,#'\n'
+	lcall putchar
+	mov a,#'\r'
+	lcall putchar
+	
+	; send reflowTime
+	mov x+1, reflowTime+1
+	mov x+0, reflowTime+0
+	lcall hex2bcd
+	Some_Macro(bcd+4)
+	Some_Macro(bcd+3)
+	Some_Macro(bcd+2)
+	Some_Macro(bcd+1)
+	Some_Macro(bcd+0)
+	mov a,#'\n'
+	lcall putchar
+	mov a,#'\r'
+	lcall putchar
 	ret
 	
 ;first estimation	
