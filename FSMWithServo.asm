@@ -180,7 +180,7 @@ checktemp:
         setb CE_ADC
         lcall SomeFunction
           ret
-
+          
 WaitHalfSec:
     mov R2, #89
 X3: mov R1, #250
@@ -209,17 +209,8 @@ stopProcess:
 	Send_Constant_String(#Blank)
 	Set_Cursor(1,1)
 	Send_Constant_String(#StopM)
-loop:
-	Notes(#130,#85,#6);C4
-	jb STOP, loop
-	Wait_Milli_Seconds(#50)
-	jb STOP, loop
-	jnb STOP, $
-	Set_Cursor(1,1)
-	Send_Constant_String(#Blank)
-	Set_Cursor(2,1)
-	Send_Constant_String(#Blank)
-	ret
+	ljmp state0
+
 	
 ; A little macro to increment BCD variables
 increment_BCD mac
@@ -358,7 +349,7 @@ state1:
     Wait_Milli_Seconds(#50)
     jb STOP, s1cont
     jnb STOP, $
-    lcall stopProcess
+    ljmp stopProcess
 s1cont:
     BLE(currTmp, soakTmp)                    ; check if currTmp <= soakTmp
     jb chkbit, jumpstate1  			; if true, loop
@@ -422,7 +413,7 @@ state2:
     Wait_Milli_Seconds(#50)
     jb STOP, s2cont
     jnb STOP, $
-    lcall stopProcesss
+    ljmp stopProcesss
 s2cont:
     clr power20
     Notes(#130,#85,#6);C4
@@ -452,7 +443,7 @@ state3:
     Wait_Milli_Seconds(#50)
     jb STOP, s3cont
     jnb STOP, $
-    lcall stopProcess
+    ljmp stopProcess
 s3cont:
     clr SSR_Power
     Notes(#130,#85,#6);C4
@@ -478,7 +469,7 @@ state4:
     Wait_Milli_Seconds(#50)
     jb STOP, s4cont
     jnb STOP, $
-    lcall stopProcess
+    ljmp stopProcess
 s4cont:
     clr power20
     clr SSR_Power							; set power to 0%
@@ -517,7 +508,7 @@ state5:
     Wait_Milli_Seconds(#50)
     jb STOP, s5cont
     jnb STOP, $
-    lcall stopProcess
+    ljmp stopProcess
 s5cont:
 	Notes(#130,#85,#6);C4
     mov a, #0
