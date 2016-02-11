@@ -323,6 +323,12 @@ state0:
     mov runTime_m, #0x00                    ; sets minutes to zero right before state 1
     clr ledflag2
     setb ledflag1
+    cpl TRICOLOUR
+    Wait_Milli_Seconds(#80)
+    cpl TRICOLOUR
+    cpl PURPLE
+    Wait_Milli_Seconds(#80)
+    cpl PURPLE
     jb start, jmpstate1                        ; if start = 1, jump to state 1
     jb SET_B, state0_start                  ; if the 'set' button is not pressed skip to checking the start button
     Wait_Milli_Seconds(#50)
@@ -360,6 +366,12 @@ state1:
     setb SSR_Power                            	; set power = 100%
     Set_Cursor(1,1)
     Send_Constant_String(#Ramp)
+    cpl YELLOW
+    Wait_Milli_Seconds(#80)
+    cpl YELLOW
+    cpl GREEN
+    Wait_Milli_Seconds(#80)
+    cpl GREEN
     clr ledflag1
     setb ledflag2
     jb STOP, check1
@@ -422,6 +434,12 @@ state2:
     lcall WaitHalfSec
     Set_Cursor(1,1)
     Send_Constant_String(#Soak)
+    cpl TRICOLOUR
+    Wait_Milli_Seconds(#80)
+    cpl TRICOLOUR
+    cpl PURPLE
+    Wait_Milli_Seconds(#80)
+    cpl PURPLE
     clr ledflag2
     setb ledflag1
     setb power20
@@ -449,6 +467,12 @@ state3:
     setb SSR_Power                            ; put 100% power
     Set_Cursor(1,1)
     Send_Constant_String(#Peak)
+    cpl YELLOW
+    Wait_Milli_Seconds(#80)
+    cpl YELLOW
+    cpl GREEN
+    Wait_Milli_Seconds(#80)
+    cpl GREEN
     clr ledflag1
     setb ledflag2
     jb STOP, check3
@@ -482,7 +506,12 @@ state4:
     Set_Cursor(1,1)
     Send_Constant_String(#Reflow)
     setb power20
-    
+    cpl TRICOLOUR
+    Wait_Milli_Seconds(#80)
+    cpl TRICOLOUR
+    cpl PURPLE
+    Wait_Milli_Seconds(#80)
+    cpl PURPLE
     clr ledflag2
     setb ledflag1
     jb STOP, check4
@@ -536,6 +565,12 @@ state5:
 	lcall displayTimer
 	lcall WaitHalfSec
     ; if temp >= 60C, loop (code is same as <= except for jump to state 0
+    cpl YELLOW
+    Wait_Milli_Seconds(#80)
+    cpl YELLOW
+    cpl GREEN
+    Wait_Milli_Seconds(#80)
+    cpl GREEN
     clr ledflag1
     setb ledflag2
     jb STOP, check5
