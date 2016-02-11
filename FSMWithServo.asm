@@ -82,7 +82,6 @@ countPs:            	ds 1
 Result:                	ds 2
 coldj: 					ds 1 		;cold junction variable
 
-Test: db 'test', 0
 ; These 'equ' must match the wiring between the microcontroller and the LCD!
 LCD_RS					equ P1.4
 LCD_RW                	equ P1.5
@@ -201,8 +200,7 @@ Y1: djnz R0, Y1 					; 3 cycles->3*45.21123ns*166=22.51519us
     ret
 
 stopProcess:
-	SendString(Test)
-    	clr start
+    clr start
 	clr start_enable
 	clr SSR_Power
 	Set_Cursor(1,1)
@@ -211,8 +209,16 @@ stopProcess:
 	Send_Constant_String(#Blank)
 	Set_Cursor(1,1)
 	Send_Constant_String(#StopM)
-	ljmp state0
-
+loop2:
+	jb STOP, loop2
+	Wait_Milli_Seconds(#50)
+	jb STOP, loop2
+	jnb STOP, $
+	Set_Cursor(1,1)
+	Send_Constant_String(#Blank)
+	Set_Cursor(2,1)
+	Send_Constant_String(#Blank)
+    ljmp state0
 	
 ; A little macro to increment BCD variables
 increment_BCD mac
@@ -337,39 +343,36 @@ state1:
     lcall displayTime
     lcall displaytimer
     lcall WaitHalfSec
-    jnb start, jump2state0                    ; if start = 0, reset to state 0
-    setb SSR_Power                            ; set power = 100%
+    setb SSR_Power                            	; set power = 100%
     Set_Cursor(1,1)
     Send_Constant_String(#Ramp)
-    ; compare if temp <= soakTmp
-    lcall checktemp
-    BLE(timerCount, #60)
-    jb chkbit, s1cont
-    BLE(currTmp, #50)
-    jb chkbit, jump2state0
-    jb STOP, s1cont
+    jb STOP, check1
     Wait_Milli_Seconds(#50)
-    jb STOP, s1cont
+    jb STOP, check1
     jnb STOP, $
     ljmp stopProcess
+    
+check1:
+    ; compare if temp <= soakTmp
+    lcall checktemp								; check the temperature
+    
+    ; check if timer is less than 60
+    BLE(timerCount, #60)
+    jb chkbit, s1cont							; if less than 60 then skip checking of temperature
+    BLE(currTmp, #50)							; if current temp is less than 50 while time is greater than 60 then stop
+    jb chkbit, jump2state0
 s1cont:
-    BLE(currTmp, soakTmp)                    ; check if currTmp <= soakTmp
-    jb chkbit, jumpstate1  			; if true, loop
-    jb STOP, s1cont1
-    Wait_Milli_Seconds(#50)
-    jb STOP, s1cont1
-    jnb STOP, $
-    lcall stopProcess
-s1cont1:    
+    BLE(currTmp, soakTmp)                    	; check if currTmp <= soakTmp
+    jb chkbit, jumpstate1  						; if true, loop
     Notes(#130,#85,#6);C4
-    mov timerCount, #0x00                    ; set timer to 0 right before going to next state
+    mov timerCount, #0x00                    	; set timer to 0 right before going to next state
     clr SSR_Power
-    ljmp state2                                ; else cont states
+    ljmp state2                                	; else cont states
 
 jumpstate1:
 	ljmp state1
 
-; jump label to go to state0    
+; jump label to go to state0 - used for if time is greater than 60 but temp is less than 50  
 jumpstate0:
 	clr start
 	clr start_enable
@@ -392,11 +395,6 @@ loop:
 	Send_Constant_String(#Blank)
     ljmp state0
     
-jump3state0:
-	clr start
-	clr start_enable
-	ljmp state0
-
 ; at preheat/soak state
 ; stays in this state until soak time has been reached (20% power)
 state2:
@@ -404,30 +402,24 @@ state2:
     lcall checktemp
     lcall displaytimer
     lcall WaitHalfSec
-    jnb start, jump3state0                    ; if start pressed, reset to state0
-   ; cjne a, #2, state3                        ; check if state = 2
     Set_Cursor(1,1)
     Send_Constant_String(#Soak)
     setb power20
-    BLE(timerCount, soakTime)                ; check if timerCount < = soakTime
-    jb chkbit, state2                        ; if true, loop
-    jb STOP, s2cont
+    jb STOP, check2
     Wait_Milli_Seconds(#50)
-    jb STOP, s2cont
+    jb STOP, check2
     jnb STOP, $
-    ljmp stopProcesss
+    ljmp stopProcess
+    
+check2:
+    BLE(timerCount, soakTime)                	; check if timerCount < = soakTime
+    jb chkbit, state2                        	; if true, loop
 s2cont:
     clr power20
     Notes(#130,#85,#6);C4
     mov timerCount,#0x00
     sjmp state3                                ; else cont states
     
-
-jump4state0:
-	clr start
-	clr start_enable
-	ljmp state0
-
 ; ramp to peak state
 ; 100% power, stays in state until selected reflow temperature has been reached
 state3:
@@ -436,16 +428,17 @@ state3:
     setb SSR_Power                            ; put 100% power
     Set_Cursor(1,1)
     Send_Constant_String(#Peak)
-    jnb start, jump4state0                    ; if start = 0, reset to state 0
+    jb STOP, check3
+    Wait_Milli_Seconds(#50)
+    jb STOP, check3
+    jnb STOP, $
+    ljmp stopProcess
+
+check3:
     lcall checktemp
     BLE(currTmp, reflowTmp)                    ; check if currTmp <= reflowTmp
     lcall WaitHalfSec
     jb chkbit, state3                        ; if true, loop
-     jb STOP, s3cont
-    Wait_Milli_Seconds(#50)
-    jb STOP, s3cont
-    jnb STOP, $
-    ljmp stopProcess
 s3cont:
     clr SSR_Power
     Notes(#130,#85,#6);C4
@@ -464,14 +457,17 @@ state4:
     Set_Cursor(1,1)
     Send_Constant_String(#Reflow)
     setb power20
+    
+    jb STOP, check4
+    Wait_Milli_Seconds(#50)
+    jb STOP, check4
+    jnb STOP, $
+    ljmp stopProcess
+    
+check4:
     BLE(timerCount, reflowTime)            		; check if timerCount <= reflowTime
     lcall WaitHalfSec
     jb chkbit, state4                        	; if true, loop
-     jb STOP, s4cont
-    Wait_Milli_Seconds(#50)
-    jb STOP, s4cont
-    jnb STOP, $
-    ljmp stopProcess
 s4cont:
     clr power20
     clr SSR_Power							; set power to 0%
@@ -502,15 +498,18 @@ state5:
 	lcall displayTimer
 	lcall WaitHalfSec
     ; if temp >= 60C, loop (code is same as <= except for jump to state 0
+    
+    jb STOP, check5
+    Wait_Milli_Seconds(#50)
+    jb STOP, check5
+    jnb STOP, $
+    ljmp stopProcess
+    
+check5:
     lcall checktemp
     BLE(currTmp, coolTmp)                    	; check if currTmp >= coolTmp
     lcall WaitHalfSec
     jnb chkbit, state5                       ; if true, loop
-     jb STOP, s5cont
-    Wait_Milli_Seconds(#50)
-    jb STOP, s5cont
-    jnb STOP, $
-    ljmp stopProcess
 s5cont:
 	Notes(#130,#85,#6);C4
     mov a, #0
