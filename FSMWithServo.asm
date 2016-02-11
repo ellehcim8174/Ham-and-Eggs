@@ -106,6 +106,8 @@ start_enable:        	dbit 1
 mf:                    	dbit 1
 hundred:                dbit 1
 hundred2:               dbit 1
+ledflag1:               dbit 1
+ledflag2:               dbit 1
 
 cseg
 
