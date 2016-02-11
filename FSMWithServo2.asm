@@ -314,6 +314,7 @@ jmpstate1:
 
 
 state0:
+	lcall checktemp
 	mov state, #0x00
  	clr power20
     Set_Cursor(1,1)
@@ -358,7 +359,6 @@ jump2state0:
 ; ramp to soak stage
 ; 100% power; stays in state until current temperature reaches soak temperature 
 state1:
-	
 	mov state, #0x01
     lcall displayTime
     lcall displaytimer
