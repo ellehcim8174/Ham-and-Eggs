@@ -297,10 +297,6 @@ Inc_Done:
     setb SSR_Power                    ; turn on power for 1 second
     mov countPs, #5                    ; sets the count back at 5
     
-    jb ledflag1, combo1
-    jb ledflag2, combo2
-   
-    
 EXIT:
     pop cy        ; restore carry flag
     pop PSW     ; restore PSW register
@@ -321,6 +317,8 @@ state0:
     clr SSR_Power
     mov runTime_s, #0x00                     ; sets seconds to zeo right before state 1
     mov runTime_m, #0x00                    ; sets minutes to zero right before state 1
+    clr ledflag2
+    setb ledflag1
     jb start, jmpstate1                        ; if start = 1, jump to state 1
     jb SET_B, state0_start                  ; if the 'set' button is not pressed skip to checking the start button
     Wait_Milli_Seconds(#50)
@@ -356,6 +354,8 @@ state1:
     setb SSR_Power                            	; set power = 100%
     Set_Cursor(1,1)
     Send_Constant_String(#Ramp)
+    clr ledflag1
+    setb ledflag2
     jb STOP, check1
     Wait_Milli_Seconds(#50)
     jb STOP, check1
@@ -415,6 +415,8 @@ state2:
     Set_Cursor(1,1)
     Send_Constant_String(#Soak)
     setb power20
+    clr ledflag2
+    setb ledflag1
     jb STOP, check2
     Wait_Milli_Seconds(#50)
     jb STOP, check2
@@ -438,6 +440,8 @@ state3:
     setb SSR_Power                            ; put 100% power
     Set_Cursor(1,1)
     Send_Constant_String(#Peak)
+    clr ledflag1
+    setb ledflag2
     jb STOP, check3
     Wait_Milli_Seconds(#50)
     jb STOP, check3
@@ -467,6 +471,9 @@ state4:
     Set_Cursor(1,1)
     Send_Constant_String(#Reflow)
     setb power20
+    
+    clr ledflag2
+    setb ledflag1
     
     jb STOP, check4
     Wait_Milli_Seconds(#50)
@@ -508,7 +515,8 @@ state5:
 	lcall displayTimer
 	lcall WaitHalfSec
     ; if temp >= 60C, loop (code is same as <= except for jump to state 0
-    
+    clr ledflag1
+    setb ledflag2
     jb STOP, check5
     Wait_Milli_Seconds(#50)
     jb STOP, check5
