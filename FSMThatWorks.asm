@@ -507,25 +507,24 @@ s4cont:
     Set_Cursor(1,1)
     Send_Constant_String(#Cool)					; writing in state 5 causes delay in display
 	
-	mov a, #0
+	mov a, #0x00
 	
 	; turn servo - DEAD
 servoloop:
-;	setb SERVO
-;	wait_milli_seconds(#1)
-;	clr SERVO
-;	wait_milli_seconds(#19)
-;	add a, #1
-;	cjne a, #60, servoloop
-;	mov a, #0
+	setb SERVO
+	wait_milli_seconds(#1)
+	clr SERVO
+	wait_milli_seconds(#19)
+	add a, #0x01
+	cjne a, #0x60, servoloop
+	mov a, #0x00
 servoloop2:
-;	setb SERVO
-;	wait_milli_seconds(#3)
-;	clr SERVO
-;	wait_milli_seconds(#17)
-;	add a, #1
-;	cjne a, #60, servoloop2
-;	mov timerCount, #0x00
+	setb SERVO
+	wait_milli_seconds(#1)
+	clr SERVO
+	wait_milli_seconds(#19)
+	add a, #0x01
+	cjne a, #0x60, servoloop2
    sjmp state5
     
 jump5state0:
