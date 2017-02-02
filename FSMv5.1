@@ -1,0 +1,451 @@
+; FSMv5.1.asm
+; fsm with states, timer 1 interrupt added in, states moved to another file
+$MODLP52
+$NOLIST
+
+; Reset vector
+org 0000H
+    ljmp MainProgram
+
+; External interrupt 0 vector (not used in this code)
+org 0003H
+	reti
+
+; Timer/Counter 0 overflow interrupt vector
+org 000BH
+	reti
+
+; External interrupt 1 vector (not used in this code)
+org 0013H
+	reti
+
+; Timer/Counter 1 overflow interrupt vector (not used in this code)
+org 001BH
+	ljmp Timer1_ISR
+
+; Serial port receive/transmit interrupt vector (not used in this code)
+org 0023H 
+	reti
+	
+; Timer/Counter 2 overflow interrupt vector
+org 002BH
+	reti
+
+coolTmp				equ 40			; temperature to cool to to be safe to handle
+CLK					equ 22118400	; Microcontroller system crystal frequency in Hz
+TIMER1_RATE			equ 1000		; 1000Hz, for a timer tick of 1ms
+TIMER1_RELOAD		equ ((65536-(CLK/TIMER1_RATE)))
+
+$NOLIST
+$include(LCD_4bit.inc)			; library of LCD functions
+$include(FSMinclude.inc)		; macros for the FSM
+$LIST
+
+DSEG at 30H
+; user defined variables
+MaxVal:				ds 3		; maximum value for some value to set
+MinVal:				ds 3		; minimum value for some value to set
+soakTime:			ds 3		; time to soak
+soakTmp:			ds 2		; temperature to soak at
+reflowTime:			ds 2		; time to reflow for
+reflowTmp:			ds 2		; temperature to reflow at
+state:				ds 1		; which state
+TICKS:				ds 2		; timer
+Temp:				ds 2		; temporary variable for displaying
+
+currTmp:			ds 2		; current temperature, from temp sensor
+timerCount:			ds 2		; timer count from timer (how many seconds in each stage)
+count4s:			ds 1
+
+
+; These 'equ' must match the wiring between the microcontroller and the LCD!
+LCD_RS 				equ P1.4
+LCD_RW 				equ P1.5
+LCD_E  				equ P1.6
+LCD_D4 				equ P3.2
+LCD_D5 				equ P3.3
+LCD_D6 				equ P3.4
+LCD_D7 				equ P3.5
+
+button				equ P2.6		; button
+SSR_Power			equ P3.7		; pin to turn on or off solid state relay
+INC_B				equ	P2.4
+DEC_B				equ P2.5
+SET_B				equ	P2.6
+STOP				equ	P2.7
+	
+bseg
+start:				dbit 1		; start = 1
+chkbit:				dbit 1		; true = 1, false = 0
+power20: 			dbit 1 ; enable to turn on 20% power
+start_enable:		dbit 1
+
+cseg
+WaitHalfSec:
+    mov R2, #89
+X3: mov R1, #250
+X2: mov R0, #166
+X1: djnz R0, X1 ; 3 cycles->3*45.21123ns*166=22.51519us
+    djnz R1, X2 ; 22.51519us*250=5.629ms
+    djnz R2, X3 ; 5.629ms*89=0.5s (approximately)
+    ret
+    
+; A little macro to increment BCD variables
+increment_BCD mac
+	mov a, %0
+	add a, #0x01
+	da a
+	mov %0, a
+endmac
+
+; Routine to initialize the ISR
+Timer1_Init:
+	clr TR1   ; turn off timer
+	mov a, TMOD  
+	anl a, #0x0Fh ; clear bits for timer 1
+	orl a, #0x10h ; Configure timer 1 as 16-timer
+	mov TMOD, a
+
+	mov TH1, #high(TIMER1_RELOAD)
+	mov TL1, #low(TIMER1_RELOAD)
+	clr TF1   ; clear timer flag
+	; Enable the timer and interrupts
+	setb ET1  ; Enable timer 0 interrupt
+    setb TR1  ; Start timer 0
+    setb EA   ; Enable Global interrupts
+ ret
+
+; ISR for timer 1
+Timer1_ISR:
+	clr TR1   ; stop the timer
+	; The two registers used in the ISR must be saved in the stack
+	push acc
+	push psw 
+	push cy
+	mov TH1, #high TIMER1_RELOAD
+	mov TL1, #low TIMER1_RELOAD 
+	setb TR1 ; start timer
+	
+	; Increment the 16-bit counter
+	inc TICKS+0    ; Increment the low 8-bits first
+	mov a, TICKS+0 ; If the low 8-bits overflow, then increment high 8-bits
+	jnz Inc_Done
+	inc TICKS+1
+Inc_Done:
+	; Check if 1000 milli-seconds had passed
+	mov a, TICKS+0
+	cjne a, #low(1000), EXIT
+	mov a, TICKS+1
+	cjne a, #high(1000), EXIT
+	; Re-start tick counter
+	clr a
+	mov TICKS+0, a
+	mov TICKS+1, a
+	; increment timer
+	mov a, timerCount
+	add a, #0x01
+	da a
+	mov timerCount, a
+	
+	; 20% power (to enable, setb power20 in state, but remember to clr when leaving state)
+	jnb power20, EXIT				; checks if 20% power bit is set. If not, jump to exit
+	clr SSR_Power						; if power 20% bit is set and 4 seconds has not passed, power should be off
+	mov a, count4s					; move 4s counter to a
+	subb a, #1							; decrements the counter
+	mov count4s, a					; returns the value
+	jnz exit									; if count is not = 0, then skip, otherwise that means 4 seconds has passed
+	setb SSR_Power					; turn on power for 1 second
+	mov count4s, #5					; sets the count back at 4
+	
+EXIT:
+	pop cy		; restore carry flag
+	pop PSW     ; restore PSW register
+	pop ACC     ; restore ACC register
+	reti
+
+cseg
+
+; sub-routine to set a value
+; user must move value to be changed into accumulator
+; move maximum value and minimum value into MaxVal and MinVal respectively
+; set bcd_num if value to be changed is a bcd number
+set_val:
+check_inc:
+	jb INC_B, check_dec		; if the 'increment' button is not pressed skip to decrement button
+	Wait_Milli_Seconds(#50)	
+	jb INC_B, check_dec  
+	jnb INC_B, $			
+	cjne a, MaxVal, incr		; if already at max value, loop back to min value
+	mov a, MinVal
+	sjmp check_done
+incr:
+	add a, #0x01
+	da a
+	ljmp check_done
+check_dec:
+	jb DEC_B, check_done		; if the 'decrement' button is not pressed skip to done button
+	Wait_Milli_Seconds(#50)	
+	jb DEC_B, check_done
+	jnb DEC_B, $
+	cjne a, MinVal, decr		; if already at min value, loop back to max value
+	mov a, MaxVal
+	sjmp check_done
+decr:
+	add a, #0x99
+	da a
+	sjmp check_done
+check_done:
+	mov Temp, a
+	Set_Cursor(1,1)
+	Display_BCD(Temp)
+check_button:
+	mov a, Temp
+	jb SET_B, set_val_jump  ; if the 'done' button is not pressed check other buttons again
+	Wait_Milli_Seconds(#50)	
+	jb SET_B, set_val_jump
+	jnb SET_B, $	
+	ret		
+set_val_jump:
+	ljmp set_val
+
+; sub-routine to go through value setting process	
+set_Values:
+	Set_Cursor(1,1)
+	Send_Constant_String(#Blank)
+	Set_Cursor(2,1)
+	Send_Constant_String(#SetMessage)
+	Set_Cursor(2,6)
+	Send_Constant_String(#SoakTimeM)
+	mov a, SoakTime
+	mov MaxVal, #0x99
+	mov MinVal, #0x20
+	lcall set_val
+	mov SoakTime, a
+next1:
+	Set_Cursor(2,6)
+	Send_Constant_String(#SoakTmpM)
+	mov a, SoakTmp
+	mov MaxVal, #0x59
+	mov MinVal, #0x00
+	lcall set_val
+	mov SoakTmp, a
+next2:
+	Set_Cursor(2,6)
+	Send_Constant_String(#ReflowTmpM)
+	mov a, ReflowTmp
+	mov MaxVal,	#0x99
+	mov MinVal,	#0x30
+	lcall set_val
+	mov ReflowTmp, a
+next3:
+	Set_Cursor(2,6)
+	Send_Constant_String(#ReflowTimeM)
+	mov a, ReflowTime
+	mov MaxVal,	#0x050
+	mov MinVal,	#0x010
+	lcall set_val
+	mov ReflowTime, a
+	
+	Set_Cursor(2,1)
+	Send_Constant_String(#DONE)
+; check if set or start buttons are pressed - set to continue setting values, start to go back to state0
+checking:
+	jb SET_B, finish 						; if the keep setting button is not pressed skip
+	Wait_Milli_Seconds(#50)
+	jb SET_B, finish  
+	jnb SET_B, $
+	ljmp set_Values								; skip back up to setting soakTmp if button pressed
+finish:
+	jb STOP, checking  						; if the done button is not pressed skip
+	Wait_Milli_Seconds(#50)
+	jb STOP, checking 
+	jnb STOP, $		
+
+	Set_Cursor(2,1)								; blank out bottom row
+	Send_Constant_String(#Blank)		
+	ret
+
+jmpstate1:
+	ljmp state1	
+
+state0:
+    clr power20
+    Set_Cursor(1,1)
+    Send_Constant_String (#Stage)
+    clr SSR_Power
+    jb start, jmpstate1        				; if start = 1, jump to state 1
+    Set_Cursor(1,7)
+    WriteData(#'0')
+    jb SET_B, state0_start  				; if the 'set' button is not pressed skip to checking the start button
+	Wait_Milli_Seconds(#50)
+	jb SET_B, state0_start 
+	jnb SET_B, $
+	lcall set_Values
+	setb start_enable
+state0_start:
+	jnb start_enable, state0				; don't allow user to start process without setting values
+	Set_Cursor (2,1)
+	Send_Constant_String(#StartMessage)
+	jb STOP, state0  						; if the 'start' button is not pressed skip back up to state0
+	Wait_Milli_Seconds(#50)
+	jb STOP, state0  	
+	jnb STOP, $			
+	Set_Cursor(2,1)		
+	Send_Constant_String(#Blank)		
+	setb start								; set the start bit if the start button was pressed
+    ljmp state0
+    
+starts1: ljmp starts
+
+; ramp to soak stage
+; 100% power; stays in state until current temperature reaches soak temperature
+bpressed:
+	Wait_Milli_Seconds(#50)
+	jnb button, $
+	mov currTmp, #50
+	sjmp s1cont
+	
+state1:
+	Set_Cursor(1,7)
+	WriteData(#'1')
+	jnb start, jumpstate0					; if start = 0, reset to state 0
+	setb SSR_Power							; set power = 100%
+	Set_Cursor(1,8)
+	Send_Constant_String(#Ramp)
+	; set sec = 0
+	; compare if temp <= 150
+	jnb button, bpressed
+s1cont:
+	BLE(currTmp, soakTmp)					; check if currTmp <= soakTmp
+	jb chkbit, state1						; if true, loop
+	Set_Cursor(1,15)
+	WriteData(#'p')
+	mov timerCount, #00H					; set timer to 0 right before going to next state
+	clr SSR_Power
+	sjmp state2								; else cont states
+
+; jump label to go to state0    
+jumpstate0:
+	ljmp state0
+    
+; at preheat/soak state
+; stays in this state until soak time has been reached (20% power0
+state2:
+	Set_Cursor(2,14)
+	Display_BCD(timerCount)
+	Set_Cursor(1,7)
+	WriteData(#'2')
+    jnb start, jumpstate0					; if start pressed, reset to state0
+   ; cjne a, #2, state3						; check if state = 2
+    Set_Cursor(1,8)
+    Send_Constant_String(#Soak)
+   	setb power20
+   	BLE(timerCount, soakTime)				; check if timerCount < = soakTime
+    jb chkbit, state2						; if true, loop
+    clr power20
+    sjmp state3								; else cont states
+
+jump2state0:
+	ljmp state0
+
+; ramp to peak state
+; 100% power, stays in state until selected reflow temperature has been reached
+state3:
+    Set_Cursor(1,7)
+	WriteData(#'3')
+    setb SSR_Power							; put 100% power
+    Set_Cursor(1,8)
+    Send_Constant_String(#Peak)
+    jnb start, jump2state0					; if start = 0, reset to state 0
+    BLE(currTmp, reflowTmp)					; check if currTmp <= reflowTmp
+    clr chkbit
+    lcall WaitHalfSec
+    Set_Cursor(1,16)
+    WriteData(#'P')
+    jb chkbit, state3						; if true, loop
+    mov timerCount, #00H					; reset timer to 0 right before changing states
+    clr SSR_Power
+    sjmp state4								; else cont states
+
+; reflow stage
+; 20% power, stays in stage until selected reflow time has been reached
+state4:
+	Set_Cursor(2, 14)						; set cursor for timer
+	Display_BCD(timerCount)					; display timer
+	
+    Set_Cursor(1,7)
+	WriteData(#'4')
+    ; if timerCount <= reflowTime, loop
+	Set_Cursor(1,8)
+    Send_Constant_String(#Reflow)
+    setb power20
+    BLE(timerCount, reflowTime)			; check if timerCount <= reflowTime
+    jb chkbit, state4						; if true, loop
+    clr power20
+    sjmp state5								; else cont states
+
+; cooling stage
+; 0% power, stays in stage until current temperature has dropped to 60
+state5:
+    Set_Cursor(1,7)
+	WriteData(#'5')
+    ; set power = 0%
+    ; if temp >= 60C, loop (code is same as <= except for jump to state 0
+    clr SSR_Power
+    Set_Cursor(1,8)
+    Send_Constant_String(#Cool)
+    BGE(currTmp, #coolTmp)					; check if currTmp >= coolTmp
+    jb chkbit, state5						; if true, loop
+    Set_Cursor(1,1)
+    Send_Constant_String(#Blank)
+    clr start_enable
+    clr start
+    Set_Cursor(2,1)
+    Send_Constant_String(#Blank)
+    ljmp state0								; else cont states
+
+; status messages
+Stage: 				db 'Stage:', 0
+StartMessage: 		db 'Start?', 0
+Ramp:				db 'Ramp', 0
+Soak:				db 'Soak', 0
+Peak:				db 'Peak', 0
+Reflow: 			db 'Reflow', 0
+Cool: 				db 'Cooling', 0
+SetMessage:			db 'Set: ',0
+ReflowTmpM:			db 'Reflow Temp',0
+SoakTmpM:			db 'Soak Temp  ',0
+SoakTimeM:			db 'Soak Time  ',0
+ReflowTimeM:		db 'Reflow Time',0
+DONE:				db 'Done setting?   ', 0
+Blank:				db '                ',0
+
+starts:
+	Wait_Milli_Seconds(#50)
+	jnb P2.4, $
+	cpl start
+	Wait_Milli_Seconds(#50)
+	sjmp Forever
+
+MainProgram:
+    mov SP, #7FH
+    mov PMOD, #0		; Configure all ports in bidirectional mode
+    clr SSR_Power
+    lcall LCD_4BIT
+    clr start
+    clr chkbit
+    clr start_enable
+    lcall Timer1_Init
+	
+	mov reflowTmp, #0x50
+	mov soakTmp, #0x40
+	mov currTmp, #0x30
+	mov soakTime, #0x22
+	mov reflowTime, #0x30
+	Set_Cursor(1,1)
+	Send_Constant_String(#StartMessage)
+Forever: 
+	ljmp state0
+	sjmp Forever
+        
+END

@@ -1,0 +1,71 @@
+DSEG at 30H
+; user defined variables
+soakTime:			ds 1		; time to soak
+soakTmp:			ds 1		; temperature to soak at
+reflowTime:			ds 1		; time to reflow for
+reflowTmp:			ds 1		; temperature to reflow at
+state:				ds 1		; which state
+TICKS:				ds 2		; timer
+
+currTmp:			ds 1		; current temperature, from temp sensor
+timerCount:			ds 2		; timer count from timer (how many seconds in each stage)
+
+count4s:			ds 1
+
+
+
+
+bseg
+start:				dbit 1		; start = 1
+chkbit:				dbit 1		; true = 1, false = 0
+power20:			dbit 1		; enable to turn on 20% power
+
+
+
+; ISR for timer 1
+Timer1_ISR:
+	clr TR1   ; stop the timer
+	; The two registers used in the ISR must be saved in the stack
+	push acc
+	push psw 
+	push cy
+	mov TH1, #high TIMER1_RELOAD
+	mov TL1, #low TIMER1_RELOAD 
+	setb TR1 ; start timer
+	
+	; Increment the 16-bit counter
+	inc TICKS+0    ; Increment the low 8-bits first
+	mov a, TICKS+0 ; If the low 8-bits overflow, then increment high 8-bits
+	jnz Inc_Done
+	inc TICKS+1
+Inc_Done:
+	; Check if 1000 milli-seconds had passed
+	mov a, TICKS+0
+	cjne a, #low(1000), EXIT
+	mov a, TICKS+1
+	cjne a, #high(1000), EXIT
+	; Re-start tick counter
+	clr a
+	mov TICKS+0, a
+	mov TICKS+1, a
+	; increment timer
+	mov a, timerCount
+	add a, #0x01
+	da a
+	mov timerCount, a
+	
+	; 20% power (to enable, setb power20 in state, but remember to clr when leaving state)
+	jnb power20, EXIT				; checks if 20% power bit is set. If not, jump to exit
+	clr SSR_Power						; if power 20% bit is set and 4 seconds has not passed, power should be off
+	mov a, count4s					; move 4s counter to a
+	subb a, #1							; decrements the counter
+	mov count4s, a					; returns the value
+	jnz exit									; if count is not = 0, then skip, otherwise that means 4 seconds has passed
+	setb SSR_Power					; turn on power for 1 second
+	mov count4s, #5					; sets the count back at 4
+	
+EXIT:
+	pop cy
+	pop PSW     ; restore PSW register
+	pop ACC     ; restore ACC register
+	reti
