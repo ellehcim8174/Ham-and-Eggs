@@ -1,0 +1,129 @@
+CLK           EQU 22118400 ; Microcontroller system crystal frequency in Hz
+TIMER1_RATE   EQU 1000    ; 1000Hz, for a timer tick of 1ms
+TIMER1_RELOAD EQU ((65536-(CLK/TIMER1_RATE)))
+
+DSEG at 30H
+; user defined variables
+soakTime:          ds 2
+soakTmp:           ds 2
+reflowTime:        ds 2
+reflowTmp:        ds 2
+state:                ds 1
+TICKS:            ds 2
+
+currTmp:            ds 1                ; from temp sensor
+timerCount:            ds 2            ; from timer
+
+cseg
+org 0000H
+   ljmp MainProgram
+; External interrupt 1 vector (not used in this code)
+org 0013H
+ reti 
+; Timer/Counter 1 overflow interrupt vector
+org 001BH
+ ljmp Timer1_ISR
+ 
+ ;---------------------------------;
+
+; Routine to initialize the ISR   ;
+
+; for timer 1                     ;
+
+;---------------------------------;
+
+Timer1_Init:
+
+ clr TR1   ; turn off timer
+
+ mov a, TMOD  
+
+ anl a, #0x0Fh ; clear bits for timer 1
+
+ orl a, #0x10h ; Configure timer 1 as 16-timer
+
+ mov TMOD, a
+
+ 
+
+ mov TH1, #high(TIMER1_RELOAD)
+
+ mov TL1, #low(TIMER1_RELOAD)
+
+ clr TF1   ; clear timer flag
+
+ ; Enable the timer and interrupts
+
+    setb ET1  ; Enable timer 0 interrupt
+
+    setb TR1  ; Start timer 0
+
+    setb EA   ; Enable Global interrupts
+
+ ret
+
+
+
+
+; A little macro to increment BCD variables
+
+increment_BCD mac
+
+ mov a, %0
+
+ add a, #1
+
+ da a
+
+ mov %0, a
+
+endmac
+
+
+
+
+;---------------------------------;
+
+; ISR for timer 1                 ;
+
+;---------------------------------;
+
+Timer1_ISR:
+
+ clr TR1   ; stop the timer
+ ; The two registers used in the ISR must be saved in the stack
+ push acc
+ push psw 
+ 
+ mov TH1, #high TIMER1_RELOAD
+ mov TL1, #low TIMER1_RELOAD 
+ setb TR1 ; start timer
+
+ 
+ ; Increment the 16-bit counter
+ inc TICKS+0    ; Increment the low 8-bits first
+ mov a, TICKS+0 ; If the low 8-bits overflow, then increment high 8-bits
+ jnz Inc_Done
+ inc TICKS+1
+
+Inc_Done:
+ ; Check if 1000 milli-seconds had passed
+ mov a, TICKS+0
+ cjne a, #low(1000), GOEXIT
+ mov a, TICKS+1
+ cjne a, #high(1000), GOEXIT
+ ; Re-start tick counter
+ mov TICKS+0, #0
+ mov TICKS+1, #0
+
+timeRuns: 
+ ; Increment time
+ increment_BCD(timerCount)
+
+EXIT:
+ pop PSW     ; restore PSW register
+ pop ACC     ; restore ACC register
+ reti
+ 
+ MainProgram:
+   lcall timer1_init
